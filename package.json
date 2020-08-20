@@ -1,0 +1,11 @@
+{
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "discord.js": "^12.2.0",
+        "mkdirp": "^1.0.4",
+        "node-fetch": "^2.6.0",
+        "numeral": "^2.0.6"
+    }
+}
