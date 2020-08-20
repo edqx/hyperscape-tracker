@@ -1,4 +1,5 @@
 config.json
+stats.json
 node_modules
 games
 .env
