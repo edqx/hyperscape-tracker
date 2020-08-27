@@ -71,6 +71,8 @@ class Bundle {
     }
 }
 
+const watch = [];
+
 /** @typedef {(import "./hyperscape.js").PlayerStats} PlayerStats */
 /** @typedef {(import "./hyperscape.js").UserProfile} UserProfile */
 
@@ -143,7 +145,7 @@ async function updateWatched(watch, stats, channel) {
                         damage_shielded: after.career_bests.damage_shielded - before.career_bests.damage_shielded > 0,
                         long_range_kills: after.career_bests.long_range_kills - before.career_bests.long_range_kills > 0,
                         short_range_kills: after.career_bests.short_range_kills - before.career_bests.short_range_kills > 0,
-                        kills: after.career_bests.kills- before.career_bests.kills> 0,
+                        kills: after.career_bests.kills - before.career_bests.kills> 0,
                         items_fused: after.career_bests.items_fused - before.career_bests.items_fused > 0,
                         critical_damage: after.career_bests.critical_damage - before.career_bests.critical_damage > 0,
                         survival_time: after.career_bests.survival_time - before.career_bests.survival_time > 0,
@@ -214,87 +216,93 @@ async function updateWatched(watch, stats, channel) {
 
                 if (matches === 1) {
                     if (solo) {
-                        await channel.send({
-                            embed: {
-                                title: "Game recorded 🕹",
-                                description: user.name + " just " + (won ? "won" : "finished") + " a solo game (Place #" + after.solo_last_rank + ")",
-                                color: 0x6977bb,
-                                fields: [
-                                    {
-                                        name: "Game Overview",
-                                        value: `
-**Game #**: \`${fmt(group.range[0])}\`
-**Kills**: \`${fmt(diff.kills)}\`${diff.career_bests.kills ? " (PB)" : ""}
-**Damage**: \`${fmt(diff.damage_done)}\`${diff.career_bests.damage_done ? " (PB)" : ""}
-**KD change**: \`${diff.kd}\`
-**Solo win rate change**: \`${diff.solo_winrate}%\`
-**Fusions**: \`${fmt(diff.fusions)}\`${diff.career_bests.items_fused ? " (PB)" : ""}
-**Chests**: \`${fmt(diff.chests_broken)}\`${diff.career_bests.chests ? " (PB)" : ""}
-**Best weapon**: ${best_weapon?.name || "N/A"}${best_weapon ? (" (`" + fmt(best_weapon.kills) + "` kill" + (best_weapon.kills === 1 ? ", `" : "s, `") + fmt(best_weapon.damage) + "` damage)") : ""}
-**Second best weapon**: ${second_best?.name || "N/A"}${second_best ? (" (`" + fmt(second_best.kills) + "` kill" + (second_best.kills === 1 ? ", `" : "s, `") + fmt(second_best.damage) + "` damage)") : ""}
-**Most fused item**: ${the_most_fused?.name || "N/A"}${the_most_fused ? (" (`" + fmt(the_most_fused.fusions) + "` fusion" + (the_most_fused.fusions === 1 ? ")" : "s)")) : ""}
-`.trim()
-                                    }
-                                ]
-                            }
-                        });
+                        if (channel) {
+							await channel.send({
+								embed: {
+									title: "Game recorded 🕹",
+									description: user.name + " just " + (won ? "won" : "finished") + " a solo game (Place #" + after.solo_last_rank + ")",
+									color: 0x6977bb,
+									fields: [
+										{
+											name: "Game Overview",
+											value: `
+	**Game #**: \`${fmt(group.range[0])}\`
+	**Kills**: \`${fmt(diff.kills)}\`${diff.career_bests.kills ? " (PB)" : ""}
+	**Damage**: \`${fmt(diff.damage_done)}\`${diff.career_bests.damage_done ? " (PB)" : ""}
+	**KD change**: \`${diff.kd}\`
+	**Solo win rate change**: \`${diff.solo_winrate}%\`
+	**Fusions**: \`${fmt(diff.fusions)}\`${diff.career_bests.items_fused ? " (PB)" : ""}
+	**Chests**: \`${fmt(diff.chests_broken)}\`${diff.career_bests.chests ? " (PB)" : ""}
+	**Best weapon**: ${best_weapon?.name || "N/A"}${best_weapon ? (" (`" + fmt(best_weapon.kills) + "` kill" + (best_weapon.kills === 1 ? ", `" : "s, `") + fmt(best_weapon.damage) + "` damage)") : ""}
+	**Second best weapon**: ${second_best?.name || "N/A"}${second_best ? (" (`" + fmt(second_best.kills) + "` kill" + (second_best.kills === 1 ? ", `" : "s, `") + fmt(second_best.damage) + "` damage)") : ""}
+	**Most fused item**: ${the_most_fused?.name || "N/A"}${the_most_fused ? (" (`" + fmt(the_most_fused.fusions) + "` fusion" + (the_most_fused.fusions === 1 ? ")" : "s)")) : ""}
+	`.trim()
+										}
+									]
+								}
+							});
+						}
                     } else {
-                        await channel.send({
-                            embed: {
-                                title: "Game recorded 🕹",
-                                description: user.name + " just " + (won ? "won" : "finished") + " a squad game (Place #" + after.squad_last_rank + ")",
-                                color: 0x6977bb,
-                                fields: [
-                                    {
-                                        name: "Game Overview",
-                                        value: `
-**Game #**: \`${fmt(group.range[0])}\`
-**Kills**: \`${fmt(diff.kills)}\`${diff.career_bests.kills ? " (PB)" : ""}
-**Assists**: \`${fmt(diff.assists)}\`${diff.career_bests.assists ? " (PB)" : ""}
-**Revives**: \`${fmt(diff.revives)}\`${diff.career_bests.revives ? " (PB)" : ""}
-**Damage**: \`${fmt(diff.damage_done)}\`${diff.career_bests.damage_done ? " (PB)" : ""}
-**KD change**: \`${diff.kd}\`
-**Squad win rate change**: \`${diff.squad_winrate}%\`
-**Fusions**: \`${fmt(diff.fusions)}\`${diff.career_bests.items_fused ? " (PB)" : ""}
-**Chests**: \`${fmt(diff.chests_broken)}\`${diff.career_bests.chests ? " (PB)" : ""}
-**Best weapon**: ${best_weapon?.name || "N/A"}${best_weapon ? (" (`" + fmt(best_weapon.kills) + "` kill" + (best_weapon.kills === 1 ? ", `" : "s, `") + fmt(best_weapon.damage) + "` damage)") : ""}
-**Second best weapon**: ${second_best?.name || "N/A"}${second_best ? (" (`" + fmt(second_best.kills) + "` kill" + (second_best.kills === 1 ? ", `" : "s, `") + fmt(second_best.damage) + "` damage)") : ""}
-**Most fused item**: ${the_most_fused?.name || "N/A"}${the_most_fused ? (" (`" + fmt(the_most_fused.fusions) + "` fusion" + (the_most_fused.fusions === 1 ? ")" : "s)")) : ""}
-`.trim()
-                                    }
-                                ]
-                            }
-                        });
+                        if (channel) {
+							await channel.send({
+								embed: {
+									title: "Game recorded 🕹",
+									description: user.name + " just " + (won ? "won" : "finished") + " a squad game (Place #" + after.squad_last_rank + ")",
+									color: 0x6977bb,
+									fields: [
+										{
+											name: "Game Overview",
+											value: `
+	**Game #**: \`${fmt(group.range[0])}\`
+	**Kills**: \`${fmt(diff.kills)}\`${diff.career_bests.kills ? " (PB)" : ""}
+	**Assists**: \`${fmt(diff.assists)}\`${diff.career_bests.assists ? " (PB)" : ""}
+	**Revives**: \`${fmt(diff.revives)}\`${diff.career_bests.revives ? " (PB)" : ""}
+	**Damage**: \`${fmt(diff.damage_done)}\`${diff.career_bests.damage_done ? " (PB)" : ""}
+	**KD change**: \`${diff.kd}\`
+	**Squad win rate change**: \`${diff.squad_winrate}%\`
+	**Fusions**: \`${fmt(diff.fusions)}\`${diff.career_bests.items_fused ? " (PB)" : ""}
+	**Chests**: \`${fmt(diff.chests_broken)}\`${diff.career_bests.chests ? " (PB)" : ""}
+	**Best weapon**: ${best_weapon?.name || "N/A"}${best_weapon ? (" (`" + fmt(best_weapon.kills) + "` kill" + (best_weapon.kills === 1 ? ", `" : "s, `") + fmt(best_weapon.damage) + "` damage)") : ""}
+	**Second best weapon**: ${second_best?.name || "N/A"}${second_best ? (" (`" + fmt(second_best.kills) + "` kill" + (second_best.kills === 1 ? ", `" : "s, `") + fmt(second_best.damage) + "` damage)") : ""}
+	**Most fused item**: ${the_most_fused?.name || "N/A"}${the_most_fused ? (" (`" + fmt(the_most_fused.fusions) + "` fusion" + (the_most_fused.fusions === 1 ? ")" : "s)")) : ""}
+	`.trim()
+										}
+									]
+								}
+							});
+						}
                     }
                 } else {
-                    await channel.send({
+                    if (channel) {
+						await channel.send({
                         embed: {
-                            title: "Games recorded 🕹",
-                            description: "Multiple games recorded for " + user.name,
-                            color: 0x6977bb,
-                            fields: [
-                                {
-                                    name: "Games Overview",
-                                    value: `
-**Games**: \`${fmt(group.range[0])} - ${fmt(group.range[1])}\` (${fmt(group.games)})
-**Solo wins**: \`${fmt(diff.solo_wins)}\` (\`${diff.solo_winrate}%\`)
-**Squad wins**: \`${fmt(diff.squad_wins)}\` (\`${diff.squad_winrate}%\`)
-**Kills**: \`${fmt(diff.kills)}\`${diff.career_bests.kills ? " (PB)" : ""}
-**Assists**: \`${fmt(diff.assists)}\`${diff.career_bests.assists ? " (PB)" : ""}
-**Revives**: \`${fmt(diff.revives)}\`${diff.career_bests.revives ? " (PB)" : ""}
-**Damage**: \`${fmt(diff.damage_done)}\`${diff.career_bests.damage_done ? " (PB)" : ""}
-**KD change**: \`${diff.kd}\`
-**Win rate change**: \`${diff.winrate}%\`
-**Fusions**: \`${fmt(diff.fusions)}\`${diff.career_bests.items_fused ? " (PB)" : ""}
-**Chests**: \`${fmt(diff.chests_broken)}\`${diff.career_bests.chests ? " (PB)" : ""}
-**Best weapon**: ${best_weapon?.name || "N/A"}${best_weapon ? (" (`" + fmt(best_weapon.kills) + "` kill" + (best_weapon.kills === 1 ? ", `" : "s, `") + fmt(best_weapon.damage) + "` damage)") : ""}
-**Second best weapon**: ${second_best?.name || "N/A"}${second_best ? (" (`" + fmt(second_best.kills) + "` kill" + (second_best.kills === 1 ? ", `" : "s, `") + fmt(second_best.damage) + "` damage)") : ""}
-**Most fused item**: ${the_most_fused?.name || "N/A"}${the_most_fused ? (" (`" + fmt(the_most_fused.fusions) + "` fusion" + (the_most_fused.fusions === 1 ? ")" : "s)")) : ""}
-`.trim()
-                                }
-                            ]
-                        }
-                    });
+								title: "Games recorded 🕹",
+								description: "Multiple games recorded for " + user.name,
+								color: 0x6977bb,
+								fields: [
+									{
+										name: "Games Overview",
+										value: `
+	**Games**: \`${fmt(group.range[0])} - ${fmt(group.range[1])}\` (${fmt(group.games)})
+	**Solo wins**: \`${fmt(diff.solo_wins)}\` (\`${diff.solo_winrate}%\`)
+	**Squad wins**: \`${fmt(diff.squad_wins)}\` (\`${diff.squad_winrate}%\`)
+	**Kills**: \`${fmt(diff.kills)}\`${diff.career_bests.kills ? " (PB)" : ""}
+	**Assists**: \`${fmt(diff.assists)}\`${diff.career_bests.assists ? " (PB)" : ""}
+	**Revives**: \`${fmt(diff.revives)}\`${diff.career_bests.revives ? " (PB)" : ""}
+	**Damage**: \`${fmt(diff.damage_done)}\`${diff.career_bests.damage_done ? " (PB)" : ""}
+	**KD change**: \`${diff.kd}\`
+	**Win rate change**: \`${diff.winrate}%\`
+	**Fusions**: \`${fmt(diff.fusions)}\`${diff.career_bests.items_fused ? " (PB)" : ""}
+	**Chests**: \`${fmt(diff.chests_broken)}\`${diff.career_bests.chests ? " (PB)" : ""}
+	**Best weapon**: ${best_weapon?.name || "N/A"}${best_weapon ? (" (`" + fmt(best_weapon.kills) + "` kill" + (best_weapon.kills === 1 ? ", `" : "s, `") + fmt(best_weapon.damage) + "` damage)") : ""}
+	**Second best weapon**: ${second_best?.name || "N/A"}${second_best ? (" (`" + fmt(second_best.kills) + "` kill" + (second_best.kills === 1 ? ", `" : "s, `") + fmt(second_best.damage) + "` damage)") : ""}
+	**Most fused item**: ${the_most_fused?.name || "N/A"}${the_most_fused ? (" (`" + fmt(the_most_fused.fusions) + "` fusion" + (the_most_fused.fusions === 1 ? ")" : "s)")) : ""}
+	`.trim()
+									} // `
+								]
+							}
+						});
+					}
                 }
                 
     
@@ -308,6 +316,107 @@ async function updateWatched(watch, stats, channel) {
     }
 }
 
+const esc = str => str.replace(/\*/g, "\\*").replace(/\`/g, "\\`").replace(/\_/g, "\\_");
+
+let before = {};
+let channel = null;
+
+let msgs = {};
+
+client.on("message", async message => {
+	const args = message.content.split(" ");
+	
+	const rest = () => args.join(" ");
+	
+	const cmd = args.shift();
+	
+	if (!msgs[message.channel.id]) msgs[message.channel.id] = [];
+	
+	if (cmd === "/watching") {
+		const msg = await message.channel.send("I am watching: " + watch.map(user => "**" + esc(user.name) + "**").join(", "));
+		
+		msgs[message.channel.id].push(message.id);
+		msgs[message.channel.id].push(msg.id);
+	} else if (cmd === "/stop") {
+		const username = rest();
+		
+		const cindex = config.watch.findIndex(_ => _.username.toLowerCase() === username);
+		const windex = watch.findIndex(_ => _.name.toLowerCase() === username);
+		
+		if (~cindex && ~windex) {
+			watch.splice(windex, 1);
+			config.watch.splice(cindex, 1);
+			
+			await fs.writeFile("config.json", JSON.stringify(config));
+			
+			const msg = await message.channel.send("Stopped watching **" + esc(username) + "**");
+			
+			msgs[message.channel.id].push(message.id);
+			msgs[message.channel.id].push(msg.id);
+		} else {
+			const msg = await message.channel.send("I am not watching **" + esc(username) + "**");
+			
+			msgs[message.channel.id].push(message.id);
+			msgs[message.channel.id].push(msg.id);
+		}
+	} else if (cmd === "/watch") {
+		let platform = "uplay";
+		
+		if (~["uplay", "pc", "xbox", "xbl", "psn", "ps", "ps4", "ps5"].indexOf(args[0]) && args[1]) {
+			const inp = args.shift();
+			
+			platform = ~["uplay", "pc"].indexOf(inp) ? "uplay" : ~["xbox", "xbl"].indexOf(inp) ? "xbl" : ~["psn", "ps", "ps4", "ps5"].indexOf(inp);
+		}
+		
+		const username = rest();
+		
+		try {
+			const cindex = config.watch.findIndex(_ => _.username.toLowerCase() === username);
+			const windex = watch.findIndex(_ => _.name.toLowerCase() === username);
+		
+			if (~cindex && ~windex) {
+				const msg = await message.channel.send("I am already watching **" + esc(username) + "**");
+				
+				msgs[message.channel.id].push(message.id);
+				msgs[message.channel.id].push(msg.id);
+			} else {
+				const profile = await hyperscape.getUser(platform, username);
+			
+				loadUser(profile);
+				
+				config.watch.push({
+					username,
+					platform
+				});
+				
+				await fs.writeFile("config.json", JSON.stringify(config));
+				
+				const msg = await message.channel.send("Now watching **" + esc(username) + "**");
+				
+				msgs[message.channel.id].push(message.id);
+				msgs[message.channel.id].push(msg.id);
+			}
+		} catch (e) {
+			console.error(e);
+			
+			const msg = await message.channel.send("Error occurred while adding **" + esc(username) + "**, see console for more details.");
+			
+			msgs[message.channel.id].push(message.id);
+			msgs[message.channel.id].push(msg.id);
+		}
+	} else if (cmd === "/clean") {
+		msgs[message.channel.id].push(message.id);
+		
+		message.channel.bulkDelete(msgs[message.channel.id].splice(msgs[message.channel.id].length - 90));
+	}
+});
+
+function loadUser(profile) {
+	watch.push(profile);
+	
+	console.log("[INFO] Loaded user " + profile.name + " on " + profile.platform + " (" + profile.id + ")");
+}
+
 (async function index() {
     await client.login(config.bot.token);
 
@@ -316,22 +425,18 @@ async function updateWatched(watch, stats, channel) {
     const guild = client.guilds.resolve(config.bot.guild);
     await guild.fetch();
 
-    const channel = guild.channels.resolve(config.bot.channel);
+    channel = guild.channels.resolve(config.bot.channel);
     await channel.fetch();
 
-    const watch = [];
-
     try {
-        const before = JSON.parse(await fs.readFile("stats.json"));
-        
+        before = JSON.parse(await fs.readFile("stats.json"));
+		
         for (let i in config.watch) {
             const user = config.watch[i];
 
             const profile = user.id ? await hyperscape.getUserByID(user.id) : await hyperscape.getUser(user.platform, user.username);
-
-            watch.push(profile);
-            
-            console.log("[INFO] Loaded user " + profile.name + " on " + profile.platform + " (" + profile.id + ")");
+			
+			loadUser(profile);
         }
 
         console.log("\n");
