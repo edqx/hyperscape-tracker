@@ -1,10 +1,13 @@
-const hyperscape = require("./hyperscape.js");
-const discord = require("discord.js");
-const numeral = require("numeral");
-const mkdir = require("mkdirp");
-const fs = require("fs").promises;
+// Imports
+import discord from "discord.js"
+import numeral from "numeral"
+import mkdir from "mkdirp"
+import fst from "fs"
+import fs from "fs/promises"
 
-const config = require("./config.json");
+import hyperscape from "./hyperscape.js"
+
+const config = JSON.parse(fst.readFileSync("./config.json"));
 
 const client = new discord.Client();
 
@@ -333,10 +336,17 @@ client.on("message", async message => {
 	if (!msgs[message.channel.id]) msgs[message.channel.id] = [];
 	
 	if (cmd === "/watching") {
-		const msg = await message.channel.send("I am watching: " + watch.map(user => "**" + esc(user.name) + "**").join(", "));
+		if (watch.length) {
+			const msg = await message.channel.send("I am watching: " + watch.map(user => "**" + esc(user.name) + "**").join(", "));
 		
-		msgs[message.channel.id].push(message.id);
-		msgs[message.channel.id].push(msg.id);
+			msgs[message.channel.id].push(message.id);
+			msgs[message.channel.id].push(msg.id);
+		} else {
+			const msg = await message.channel.send("I am not watching anyone.");
+		
+			msgs[message.channel.id].push(message.id);
+			msgs[message.channel.id].push(msg.id);
+		}
 	} else if (cmd === "/stop") {
 		const username = rest();
 		
@@ -417,42 +427,42 @@ function loadUser(profile) {
 	console.log("[INFO] Loaded user " + profile.name + " on " + profile.platform + " (" + profile.id + ")");
 }
 
-(async function index() {
-    await client.login(config.bot.token);
+client.on("ready", async () => {
+	console.log("Bot logged in!");
 
-    console.log("Bot logged in!");
+	const guild = client.guilds.resolve(config.bot.guild);
+	await guild.fetch();
 
-    const guild = client.guilds.resolve(config.bot.guild);
-    await guild.fetch();
+	channel = guild.channels.resolve(config.bot.channel);
+	await channel.fetch();
 
-    channel = guild.channels.resolve(config.bot.channel);
-    await channel.fetch();
-
-    try {
-        before = JSON.parse(await fs.readFile("stats.json"));
+	try {
+		before = JSON.parse(await fs.readFile("stats.json"));
 		
-        for (let i in config.watch) {
-            const user = config.watch[i];
+		for (let i in config.watch) {
+			const user = config.watch[i];
 
-            const profile = user.id ? await hyperscape.getUserByID(user.id) : await hyperscape.getUser(user.platform, user.username);
+			const profile = user.id ? await hyperscape.getUserByID(user.id) : await hyperscape.getUser(user.platform, user.username);
 			
 			loadUser(profile);
-        }
+		}
 
-        console.log("\n");
+		setInterval(() => updateWatched(watch, before, channel), config.every);
 
-        setInterval(() => updateWatched(watch, before, channel), config.every);
+		updateWatched(watch, before, channel);
+	} catch (e) {
+		if (e.code === "ENOENT") {
+			await fs.writeFile("stats.json", "{}");
+		} else {
+			if (e.code) {
+				console.log("[ERROR] Could not get last statistics. " + e.code);
+			} else {
+				console.log("[ERROR]", e);
+			}
+		}
+	}
+});
 
-        updateWatched(watch, before, channel);
-    } catch (e) {
-        if (e.code === "ENOENT") {
-            await fs.writeFile("stats.json", "{}");
-        } else {
-            if (e.code) {
-                console.log("[ERROR] Could not get last statistics. " + e.code);
-            } else {
-                console.log("[ERROR]", e);
-            }
-        }
-    }
+(async function index() {
+    await client.login(config.bot.token);
 })();

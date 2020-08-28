@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch"
 
 /**
  * @typedef PlayerCareerBests
@@ -127,7 +127,7 @@ function parsePerc(perc) {
     return Math.floor(parseFloat(perc) * 100) / 100
 }
 
-async function calculateDiff(before, after) {
+export async function calculateDiff(before, after) {
     return {
         wins: after.wins - before.wins,
         crown_wins: after.crown_wins - before.crown_wins,
@@ -209,7 +209,7 @@ async function calculateDiff(before, after) {
  * @param {String} id The ID of the player.
  * @returns {UserProfileStats}
  */
-async function getStats(id) {
+export async function getStats(id) {
     const res = await fetch("https://hypers.apitab.com/update/" + id);
 
     if (res.status === 200) {
@@ -321,7 +321,7 @@ async function getStats(id) {
  * @param {String} username The username of the player.
  * @returns {UserProfile}
  */
-async function getUser(platform, username) {
+export async function getUser(platform, username) {
     const res = await fetch("https://hypers.apitab.com/search/" + platform  + "/" + username);
 
     if (res.status === 200) {
@@ -352,13 +352,13 @@ async function getUser(platform, username) {
  * @param {String} id The ID of the user.
  * @returns {Promise<UserProfile>}
  */
-async function getUserByID(id) {
+export async function getUserByID(id) {
     const stats = await getStats(id);
     
     return stats.profile;
 }
 
-module.exports = {
+export default {
     calculateDiff,
     getStats,
     getUser,
