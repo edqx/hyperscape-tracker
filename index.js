@@ -381,8 +381,8 @@ client.on("message", async message => {
 		const username = rest();
 		
 		try {
-			const cindex = config.watch.findIndex(_ => _.username.toLowerCase() === username);
-			const windex = watch.findIndex(_ => _.name.toLowerCase() === username);
+			const cindex = config.watch.findIndex(_ => _.username.toLowerCase() === username.toLowerCase());
+			const windex = watch.findIndex(_ => _.name.toLowerCase() === username.toLowerCase());
 		
 			if (~cindex && ~windex) {
 				const msg = await message.channel.send("I am already watching **" + esc(username) + "**");
