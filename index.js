@@ -350,8 +350,8 @@ client.on("message", async message => {
 	} else if (cmd === "/stop") {
 		const username = rest();
 		
-		const cindex = config.watch.findIndex(_ => _.username.toLowerCase() === username);
-		const windex = watch.findIndex(_ => _.name.toLowerCase() === username);
+		const cindex = config.watch.findIndex(_ => _.username.toLowerCase() === username.toLowerCase());
+		const windex = watch.findIndex(_ => _.name.toLowerCase() === username.toLowerCase());
 		
 		if (~cindex && ~windex) {
 			watch.splice(windex, 1);
